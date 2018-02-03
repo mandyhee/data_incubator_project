@@ -1,0 +1,71 @@
+/**Aim 2: evaluate marketing status by year group**/
+proc import datafile='C:\Users\Meng-Ni Ho\Desktop\drug\MarketingStatus.xlsx'
+			out=drug.market
+			dbms=xlsx;
+			getnames=yes;
+run;
+proc print data=drug.market1 (obs=100); run;
+proc sort data=drug.market; by applno; run;
+data drug.market1; set drug.market;
+by applno;
+if first.applno then output;
+run;
+
+proc sort data=drug.submit2; by applno; run;
+data drug.submit_market; 
+merge drug.submit2 drug.market;
+by applno;
+run;
+
+proc print data=drug.submit_market(obs=100); run;
+proc freq data=drug.submit_market;
+	table dategroup*marketingstatusID; 
+run;
+
+/**********proc freq results: %marketing status by yeargroup:****************
+	year				                  marketing status
+			        1(Prescription)		2(Over-the-counter)  3(Discontinued)  4(None/tentative approval) 
+1 (1939-1950)		23.35				0.51		76.14			0
+2 (1951-1970)		25.02				0.09		74.89			0
+3 (1971-1990)		35.49				1.12		63.40			0		
+4 (1991-2010)		62.52				3.03		32.60			1.85
+5 (2010-2017)		82.50				1.89		4.46			11.15
+*******************************************************************************/
+
+data market;
+length yeargroup $ 9 Marketing_Status $ 25;
+input yeargroup $ Marketing_Status $ Percentage;
+cards;
+1939-1950 Prescription 23.35
+1939-1950 Over_the_counter 0.51
+1939-1950 Discontinued 76.14 
+1939-1950 None_tentative_approval 0
+1951-1970 Prescription 25.02
+1951-1970 Over_the_counter 0.09
+1951-1970 Discontinued 74.89
+1951-1970 None_tentative_approval 0
+1971-1990 Prescription 35.49
+1971-1990 Over_the_counter 1.12
+1971-1990 Discontinued 63.40
+1971-1990 None_tentative_approval 0
+1991-2010 Prescription 62.52
+1991-2010 Over_the_counter 3.03
+1991-2010 Discontinued 32.60
+1991-2010 None_tentative_approval 1.85
+2010-2017 Prescription 82.50
+2010-2017 Over_the_counter 1.89 
+2010-2017 Discontinued 4.46
+2010-2017 None_tentative_approval 11.15
+;
+run;
+proc print data=market; run;
+
+proc gchart data=market;
+	title 'Current Marketing status in each year group';
+	vbar yeargroup / subgroup=Marketing_status sumvar=percentage;
+run;
+quit;
+
+
+
+
