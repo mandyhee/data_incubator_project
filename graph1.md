@@ -1,0 +1,79 @@
+# data_incubator_project
+libname drug 'C:\Users\Meng-Ni Ho\Desktop\drug';
+proc import datafile= 'C:\Users\Meng-Ni Ho\Desktop\drug\Submissions.xlsx'
+			out=drug.submit
+			dbms=xlsx;
+			getnames=yes;
+run;
+proc contents data=drug.submit; run;
+proc print data=drug.submit(obs=100); run;
+proc sort data=drug.submit; by applno; run;
+
+/**Aim1: evaluate number of drug applications by yeargroup**/
+*select distinct application number;
+data drug.submit1; set drug.submit;
+keep applno submissionclasscodeid submissiontype submissionstatusdate;
+by applno;
+if first.applno then output;
+run;
+proc print data=drug.submit1 (obs=100); run;
+proc contents data=drug.submit2; run;
+
+options yearcutoff=1920;
+data drug.submit2; set drug.submit1;
+date=datepart(submissionstatusdate);
+if .z<date<=-3288 then dategroup=1;
+	else if -3288<date<=4017 then dategroup=2;
+	else if 4017<date<=11322 then dategroup=3;
+	else if 11322<date<=18627 then dategroup=4;
+	else if date>18627 then dategroup=5;
+run;
+
+*date group:from 1939-1950: 1, 1951-1970: 2; 1971-1990: 3, 1990-2010: 4, >2010: 5;
+/**convert date to SAS date**/
+data one;
+input date date7.;
+cards;
+31DEC50  
+31DEC70
+31DEC90
+31DEC10
+;
+run;
+*result: -3288 (1950), 4017 (1970), 11322 (1990), 18627 (2010);
+
+proc print data=one; run;
+
+proc freq data=drug.submit2; 
+	table dategroup;
+run;
+/********************proc freq results:******************************
+dategroup frequency percent cumulative frequency cumulative_percent
+	1		153		0.81	153			0.81
+	2		838		4.45	991			5.26
+	3		4958	26.32	5949		31.58
+	4		7720	40.99	13669		72.57
+	5		5166	27.43	18835		100
+**********************************************************************/
+
+/**plot number of applications by yeargroup**/
+data freq;
+length yeargroup $ 9;
+input yeargroup $ applications;
+cards;
+1939-1950 153
+1951-1970 838
+1971-1990 4958
+1990-2010 7720
+2010-2017 5166
+;
+run;
+proc print data=freq; run;
+
+symbol1 value=dot interpol=join;
+title 'Trend in number of drug applications from 1939-2017';
+proc gplot data=freq;
+	plot applications*yeargroup;
+run;
+
+
